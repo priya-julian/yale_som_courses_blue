@@ -1,0 +1,44 @@
+# Render Blueprint: deploys the FastAPI backend and the Vite/React frontend.
+#
+# Render reads this file when you create a Blueprint from the repo, so both
+# services get configured at once instead of filling in the dashboard forms.
+#
+# Two values are marked `sync: false`, which means Render prompts you for them
+# instead of storing them here (never commit an API key):
+#   PORTKEY_API_KEY  - your key, same one as in the local .env
+#   VITE_API_URL     - the backend's URL, available only after it first deploys
+
+services:
+  # ---------------------------------------------------------------- backend
+  - type: web
+    name: yale-som-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: PORTKEY_API_KEY
+        sync: false
+
+  # --------------------------------------------------------------- frontend
+  - type: web
+    name: yale-som-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      # Set this to the backend's full URL once it deploys, with the scheme and
+      # no trailing slash, e.g. https://yale-som-api.onrender.com
+      # Vite inlines it at build time, so changing it needs a redeploy.
+      - key: VITE_API_URL
+        sync: false
+    routes:
+      # Serve index.html for unknown paths so client-side routing works.
+      - type: rewrite
+        source: /*
+        destination: /index.html
