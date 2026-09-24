@@ -1,4 +1,11 @@
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000'
+const RAW_API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000'
+
+/** Render's `fromService` gives a bare hostname with no scheme, so add one when
+ * it's missing, and drop any trailing slash — paths below already start with
+ * `/api`, and a double slash 404s. */
+const API_URL = (
+  /^https?:\/\//.test(RAW_API_URL) ? RAW_API_URL : `https://${RAW_API_URL}`
+).replace(/\/+$/, '')
 
 /** One row of data/yale_som_classes.json, as served by GET /api/courses. */
 export interface Course {
